@@ -27,4 +27,9 @@ class Sugar extends Image implements GameObject {
     public float getCenterY() {
         return getY() - getHeight()*getScaleY()*0.5f;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Sugar at %f, %f", getCenterX(), getCenterY());
+    }
 }

@@ -46,6 +46,11 @@ public class AntGame extends ApplicationAdapter {
 		public float getCenterY() {
 			return HEIGHT/2;
 		}
+
+		@Override
+		public String toString() {
+			return "Hill";
+		}
 	}
 
 	public class Marker implements GameObject {

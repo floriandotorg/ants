@@ -137,7 +137,17 @@ public abstract class Ant extends Actor {
     }
 
     protected void take(Sugar sugar) {
-        carries = sugar;
+        if (!isCarrying()) {
+            if (new Vector2(getX(), getY()).dst(sugar.getCenterX(), sugar.getCenterY()) <= HIT_RADIUS) {
+                carries = sugar;
+                goal = null;
+                state = State.IDLE;
+            } else {
+                print("Sugar too far away");
+            }
+        } else {
+            print("Already carrying something");
+        }
     }
 
     protected void turn(float deg) {
@@ -152,10 +162,14 @@ public abstract class Ant extends Actor {
 
     protected void unload() {
         final AntGame.Hill hill = game.getHill();
-        if (isCarrying() && new Vector2(getX(), getY()).dst(hill.getCenterX(), hill.getCenterY()) <= HIT_RADIUS) {
-            game.unload(carries);
-            carries = null;
-            state = State.IDLE;
+        if (isCarrying()) {
+            if (new Vector2(getX(), getY()).dst(hill.getCenterX(), hill.getCenterY()) <= HIT_RADIUS) {
+                game.unload(carries);
+                carries = null;
+                state = State.IDLE;
+            } else {
+                print("Hill too far away");
+            }
         }
     }
 
