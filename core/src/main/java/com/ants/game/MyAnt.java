@@ -25,8 +25,16 @@ public class MyAnt extends Ant {
         Unloads whatever the ant is carrying if its close to the hill
         void unload()
 
+        Spray a scent mark with a number and radius (max. 100).
+        One Ant can only spray one mark at the time.
+        Ants cannot smell their own scents.
+        void sprayScent(int number, float radius)
+
         Returns ture if ant is walking to a goal
         boolean hasGoal()
+
+        Returns the current goal or null
+        boolean getGoal()
 
         Return true is ant is carrying something
         boolean isCarrying()
@@ -38,7 +46,6 @@ public class MyAnt extends Ant {
 
     @Override
     void hasNothingToDo() {
-
     }
 
     @Override
@@ -58,6 +65,11 @@ public class MyAnt extends Ant {
 
     @Override
     void hitsHill() {
+
+    }
+
+    @Override
+    void smellsNewScent(Scent scent) {
 
     }
 }

@@ -17,6 +17,16 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.*;
 import com.badlogic.gdx.math.*;
 import java.util.*;
+import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.graphics.glutils.*;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.assets.*;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.math.*;
 import org.w3c.dom.Text;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -28,6 +38,7 @@ public class AntGame extends ApplicationAdapter {
 	private ShapeRenderer shapeRenderer;
 	private Hill hill;
 	private ArrayList<Marker> markers;
+	private ArrayList<Scent> scents;
 	private BitmapFont font;
 	private int points = 0;
 
@@ -84,6 +95,9 @@ public class AntGame extends ApplicationAdapter {
 		for (GameObject marker : markers) {
 			result.add(marker);
 		}
+		for (GameObject scent : scents) {
+			result.add(scent);
+		}
 		for (Actor actor : stage.getActors()) {
 			if (actor instanceof GameObject) {
 				result.add((GameObject) actor);
@@ -103,10 +117,27 @@ public class AntGame extends ApplicationAdapter {
         return result;
 	}
 
+	public ArrayList<Actor> getActorsInRadius(float x, float y, float radius) {
+		final ArrayList<Actor> result = new ArrayList<>();
+		final Circle viewCircle = new Circle(x, y, radius);
+        for (Actor actor : stage.getActors()) {
+            if (viewCircle.contains(actor.getX(), actor.getY())) {
+                result.add(actor);
+            }
+        }
+        return result;
+	}
+
 	public GameObject createMarker(float x, float y) {
 		final Marker marker = new Marker(x, y);
 		markers.add(marker);
 		return marker;
+	}
+
+	public void addScent(Scent scent) {
+		if (scents.stream().filter(s -> s.getAnt() == scent.getAnt()).count() < 1) {
+			scents.add(scent);
+		}
 	}
 
 	public void unload(GameObject object) {
@@ -122,19 +153,21 @@ public class AntGame extends ApplicationAdapter {
 		manager.load("sugar.png", Texture.class);
 
 		camera = new OrthographicCamera();
-		camera.setToOrtho(true, WIDTH, HEIGHT);
+		camera.setToOrtho(false, WIDTH, HEIGHT);
 
 		batch = new SpriteBatch();
 		stage = new Stage(new FitViewport(WIDTH, HEIGHT, camera), batch);
+		stage.setDebugAll(false);
 
 		font = new BitmapFont();
-		font.getData().setScale(1.5f, -1.5f);
+		font.getData().setScale(1.5f, 1.5f);
 		font.setColor(Color.RED);
 
 		shapeRenderer = new ShapeRenderer();
 
 		hill = new Hill();
 		markers = new ArrayList<>();
+		scents = new ArrayList<>();
 
 //		skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 //
@@ -161,17 +194,17 @@ public class AntGame extends ApplicationAdapter {
 
 		{
 			final Sugar sugar = new Sugar(this);
-			sugar.setPosition(100, 100);
+			sugar.setPosition(50, HEIGHT - 100);
 			stage.addActor(sugar);
 		}
 		{
 			final Sugar sugar = new Sugar(this);
-			sugar.setPosition(600, 200);
+			sugar.setPosition(500, HEIGHT - 200);
 			stage.addActor(sugar);
 		}
 		{
 			final Sugar sugar = new Sugar(this);
-			sugar.setPosition(200, 450);
+			sugar.setPosition(150, HEIGHT - 450);
 			stage.addActor(sugar);
 		}
 	}
@@ -189,6 +222,27 @@ public class AntGame extends ApplicationAdapter {
 			timeAux += Gdx.graphics.getDeltaTime();
 		}
 
+		Iterator<Scent> iter = scents.iterator();
+		while (iter.hasNext()) {
+			Scent scent = iter.next();
+
+			scent.tick(Gdx.graphics.getDeltaTime());
+
+			if (scent.vanished()) {
+				iter.remove();
+			} else {
+				for (Actor actor : getActorsInRadius(scent.getCenterX(), scent.getCenterY(), scent.getRadius())) {
+					if (actor instanceof Ant) {
+						final Ant ant = (Ant)actor;
+						if (ant != scent.getAnt() && !scent.hasAlreadySmalled(ant)) {
+							scent.smelled(ant);
+							ant.smellsNewScent(scent);
+						}
+					}
+				}
+			}
+		}
+
 		Gdx.gl.glClearColor(0.88f, 0.66f, 0.37f, 1f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -196,15 +250,22 @@ public class AntGame extends ApplicationAdapter {
 		batch.setProjectionMatrix(camera.combined);
 
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+		shapeRenderer.setColor(0.78f, 0.56f, 0.37f, 1);
+		for (Scent scent : scents) {
+			shapeRenderer.circle(scent.getCenterX(), scent.getCenterY(), scent.getRadius());
+		}
+
 		shapeRenderer.setColor(0.68f, 0.46f, 0.27f, 1);
 		shapeRenderer.circle(WIDTH/2, HEIGHT/2, HILL_RADIUS);
+
 		shapeRenderer.end();
 
 		stage.act(Gdx.graphics.getDeltaTime());
 		stage.draw();
 
 		batch.begin();
-		font.draw(batch, String.format("Points: %d", points), 5, 5);
+		font.draw(batch, String.format("Points: %d", points), 5, HEIGHT-5);
 		batch.end();
 	}
 

@@ -14,18 +14,16 @@ import com.badlogic.gdx.math.*;
 class Sugar extends Image implements GameObject {
     public Sugar(AntGame game) {
         super(game.manager.get("sugar.png", Texture.class));
-        setScale(0.5f);
-        setRotation(180);
     }
 
     @Override
     public float getCenterX() {
-        return getX() - getWidth()*getScaleX()*0.5f;
+        return getX() + getWidth()/2;
     }
 
     @Override
     public float getCenterY() {
-        return getY() - getHeight()*getScaleY()*0.5f;
+        return getY() + getHeight()/2;
     }
 
     @Override

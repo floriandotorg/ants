@@ -33,11 +33,13 @@ public abstract class Ant extends Actor {
         this.game = game;
 
         sprite = new Sprite(game.manager.get("guide.png", Texture.class));
-        sprite.setScale(0.2f);
-        setRotation(MathUtils.random(0, 360));
+        sprite.flip(false, true);
 
         sugar = new Sprite(game.manager.get("sugar.png", Texture.class));
-        sugar.setScale(0.1f);
+        sugar.setScale(0.2f);
+
+        setRotation(MathUtils.random(0, 360));
+        setSize(10, 10);
     }
 
     @Override
@@ -62,7 +64,6 @@ public abstract class Ant extends Actor {
                 hitsSugar((Sugar)object);
             }
 
-
             if (object instanceof AntGame.Hill) {
                 hitsHill();
             }
@@ -73,40 +74,29 @@ public abstract class Ant extends Actor {
                 hasNothingToDo();
                 break;
             case WALKING:
-                final float width = (sprite.getWidth() * sprite.getScaleX()) / 2;
-                final float height = (sprite.getHeight() * sprite.getScaleY()) / 2;
+                final float width = sprite.getWidth() / 2;
+                final float height = sprite.getHeight() / 2;
 
-                if (getX() + width >= game.WIDTH) {
-                    rotateBy(90);
-                }
-                if (getX() - width <= 0) {
-                    rotateBy(90);
-                }
-                if (getY() + height >= game.HEIGHT) {
-                    rotateBy(90);
-                }
-                if (getY() - height <= 0) {
+                if (getX() + width >= game.WIDTH || getX() - width <= 0 || getY() + height >= game.HEIGHT || getY() - height <= 0) {
                     rotateBy(90);
                 }
 
-                final float xOffset = SPEED * MathUtils.cos(MathUtils.degreesToRadians * getRotation()) * delta;
-                final float yOffset = SPEED * MathUtils.sin(MathUtils.degreesToRadians * getRotation()) * delta;
-                moveBy(xOffset, yOffset);
+                final Vector2 point = new Vector2((float)Math.cos(getRotation() * MathUtils.degreesToRadians), (float)Math.sin(getRotation() * MathUtils.degreesToRadians)).scl(SPEED * delta);
+                moveBy(point.x, point.y);
 
                 break;
         }
-
-        sprite.setPosition(getX() - sprite.getWidth()/2, getY() - sprite.getHeight()/2);
-        sprite.setRotation(getRotation() + 90);
-        sugar.setPosition(getX() - sugar.getWidth()/2, getY() - sugar.getHeight()/2);
-        sugar.setRotation(sprite.getRotation());
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
+        sprite.setCenter(getX(), getY());
+        sprite.setRotation(getRotation() + 90);
         sprite.draw(batch);
 
         if (carries instanceof Sugar) {
+            sugar.setCenter(getX(), getY());
+            sugar.setRotation(getRotation() + 90);
             sugar.draw(batch);
         }
     }
@@ -130,6 +120,10 @@ public abstract class Ant extends Actor {
 
     protected boolean hasGoal() {
         return goal != null;
+    }
+
+    protected GameObject getGoal() {
+        return goal;
     }
 
     protected boolean isCarrying() {
@@ -173,6 +167,10 @@ public abstract class Ant extends Actor {
         }
     }
 
+    protected void sprayScent(int number, float radius) {
+        game.addScent(new Scent(this, number, getX(), getY(), Math.min(radius, 100)));
+    }
+
     protected void print(String str) {
         Gdx.app.log("MyAnt", str);
     }
@@ -182,4 +180,5 @@ public abstract class Ant extends Actor {
     abstract void seesHill();
     abstract void hitsSugar(Sugar sugar);
     abstract void hitsHill();
+    abstract void smellsNewScent(Scent scent);
 }
