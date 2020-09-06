@@ -192,21 +192,22 @@ public class AntGame extends ApplicationAdapter {
 		Gdx.input.setInputProcessor(stage);
 		manager.finishLoading();
 
-		{
-			final Sugar sugar = new Sugar(this);
-			sugar.setPosition(50, HEIGHT - 100);
-			stage.addActor(sugar);
+		for (int n = 0; n < 3; ++n) {
+			spawnSugar();
 		}
-		{
-			final Sugar sugar = new Sugar(this);
-			sugar.setPosition(500, HEIGHT - 200);
-			stage.addActor(sugar);
-		}
-		{
-			final Sugar sugar = new Sugar(this);
-			sugar.setPosition(150, HEIGHT - 450);
-			stage.addActor(sugar);
-		}
+	}
+
+	private Vector2 randomPoint(float R1, float R2) {
+		final float theta = MathUtils.random(0, 360);
+		final float dist = (float)Math.sqrt(Math.random()*(Math.pow(R1, 2)-Math.pow(R2, 2))+Math.pow(R2, 2));
+		return new Vector2((float)(dist * Math.cos(theta)), (float)(dist * Math.sin(theta)));
+	}
+
+	private void spawnSugar() {
+		final Sugar sugar = new Sugar(this);
+		final Vector2 point = randomPoint(HILL_RADIUS * 4, HEIGHT/2 - 50);
+		sugar.setPosition(point.x + WIDTH/2, HEIGHT - (point.y + HEIGHT/2));
+		stage.addActor(sugar);
 	}
 
 	private float timeAux = 0;
@@ -239,6 +240,16 @@ public class AntGame extends ApplicationAdapter {
 							ant.smellsNewScent(scent);
 						}
 					}
+				}
+			}
+		}
+
+		for (Actor actor : stage.getActors()) {
+			if (actor instanceof Sugar) {
+				final Sugar sugar = (Sugar)actor;
+				if (sugar.depleted()) {
+					sugar.remove();
+					spawnSugar();
 				}
 			}
 		}

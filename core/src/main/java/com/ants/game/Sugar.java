@@ -12,8 +12,21 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.math.*;
 
 class Sugar extends Image implements GameObject {
+    final int INITIAL_AMOUNT = 100;
+
+    private int amount = INITIAL_AMOUNT;
+
     public Sugar(AntGame game) {
         super(game.manager.get("sugar.png", Texture.class));
+    }
+
+    public void takeOne() {
+        --amount;
+        setScale(0.7f + 0.3f * (amount / (float)INITIAL_AMOUNT));
+    }
+
+    public boolean depleted() {
+        return amount < 1;
     }
 
     @Override

@@ -134,6 +134,7 @@ public abstract class Ant extends Actor {
         if (!isCarrying()) {
             if (new Vector2(getX(), getY()).dst(sugar.getCenterX(), sugar.getCenterY()) <= HIT_RADIUS) {
                 carries = sugar;
+                sugar.takeOne();
                 goal = null;
                 state = State.IDLE;
             } else {
