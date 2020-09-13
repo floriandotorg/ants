@@ -32,6 +32,8 @@ import org.w3c.dom.Text;
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class AntGame extends ApplicationAdapter {
 	protected Stage stage;
+	private Group antGroup;
+	private Group objectsGroup;
 	private OrthographicCamera camera;
 	private SpriteBatch batch;
 	protected AssetManager manager;
@@ -62,6 +64,11 @@ public class AntGame extends ApplicationAdapter {
 		public String toString() {
 			return "Hill";
 		}
+
+		@Override
+		public Vector2 getCenter() {
+			return new Vector2(getCenterX(), getCenterY());
+		}
 	}
 
 	public class Marker implements GameObject {
@@ -81,6 +88,11 @@ public class AntGame extends ApplicationAdapter {
 		public float getCenterY() {
 			return y;
 		}
+
+		@Override
+		public Vector2 getCenter() {
+			return new Vector2(getCenterX(), getCenterY());
+		}
 	}
 
 //	private Skin skin;
@@ -97,6 +109,16 @@ public class AntGame extends ApplicationAdapter {
 		}
 		for (GameObject scent : scents) {
 			result.add(scent);
+		}
+		for (Actor actor : antGroup.getChildren()) {
+			if (actor instanceof GameObject) {
+				result.add((GameObject) actor);
+			}
+		}
+		for (Actor actor : objectsGroup.getChildren()) {
+			if (actor instanceof GameObject) {
+				result.add((GameObject) actor);
+			}
 		}
 		for (Actor actor : stage.getActors()) {
 			if (actor instanceof GameObject) {
@@ -144,6 +166,11 @@ public class AntGame extends ApplicationAdapter {
 		if (object instanceof Sugar) {
 			points += 5;
 		}
+		if (object instanceof Apple) {
+			points += 100;
+			((Apple)object).remove();
+			spawnApple();
+		}
 	}
 
 	@Override
@@ -151,13 +178,20 @@ public class AntGame extends ApplicationAdapter {
 		manager = new AssetManager();
 		manager.load("guide.png", Texture.class);
 		manager.load("sugar.png", Texture.class);
+		manager.load("apple.png", Texture.class);
 
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, WIDTH, HEIGHT);
 
 		batch = new SpriteBatch();
 		stage = new Stage(new FitViewport(WIDTH, HEIGHT, camera), batch);
+
 		stage.setDebugAll(false);
+
+		antGroup = new Group();
+		objectsGroup = new Group();
+		stage.addActor(objectsGroup);
+		stage.addActor(antGroup);
 
 		font = new BitmapFont();
 		font.getData().setScale(1.5f, 1.5f);
@@ -195,6 +229,10 @@ public class AntGame extends ApplicationAdapter {
 		for (int n = 0; n < 3; ++n) {
 			spawnSugar();
 		}
+
+		for (int n = 0; n < 3; ++n) {
+			spawnApple();
+		}
 	}
 
 	private Vector2 randomPoint(float R1, float R2) {
@@ -205,9 +243,16 @@ public class AntGame extends ApplicationAdapter {
 
 	private void spawnSugar() {
 		final Sugar sugar = new Sugar(this);
-		final Vector2 point = randomPoint(HILL_RADIUS * 4, HEIGHT/2 - 50);
+		final Vector2 point = randomPoint(HILL_RADIUS * 6, HEIGHT/2 - 30);
 		sugar.setPosition(point.x + WIDTH/2, HEIGHT - (point.y + HEIGHT/2));
-		stage.addActor(sugar);
+		objectsGroup.addActor(sugar);
+	}
+
+	private void spawnApple() {
+		final Apple apple = new Apple(this);
+		final Vector2 point = randomPoint(HILL_RADIUS * 6, HEIGHT/2 - 30);
+		apple.setPosition(point.x + WIDTH/2, HEIGHT - (point.y + HEIGHT/2));
+		objectsGroup.addActor(apple);
 	}
 
 	private float timeAux = 0;
@@ -217,7 +262,7 @@ public class AntGame extends ApplicationAdapter {
 		if (timeAux >= 1 && Arrays.stream(stage.getActors().toArray()).filter(actor -> actor instanceof Ant).count() < MAX_ANTS) {
 			final Ant ant = new MyAnt(this);
 			ant.setPosition(WIDTH/2, HEIGHT/2);
-			stage.addActor(ant);
+			antGroup.addActor(ant);
 			timeAux = 0;
 		} else {
 			timeAux += Gdx.graphics.getDeltaTime();

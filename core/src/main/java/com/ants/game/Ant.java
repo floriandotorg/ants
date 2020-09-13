@@ -13,7 +13,8 @@ import com.badlogic.gdx.math.*;
 
 enum State {
     IDLE,
-    WALKING
+    WALKING,
+    CARRYING_APPLE
 }
 
 public abstract class Ant extends Actor {
@@ -49,6 +50,10 @@ public abstract class Ant extends Actor {
                 seesSugar((Sugar)object);
             }
 
+            if (object instanceof Apple) {
+                seesApple((Apple)object);
+            }
+
             if (object instanceof AntGame.Hill) {
                 seesHill();
             }
@@ -56,12 +61,16 @@ public abstract class Ant extends Actor {
 
         for (GameObject object : game.getGameObjectsInRadius(getX(), getY(), HIT_RADIUS)) {
             if (object == goal) {
-                goal = null;
+                setGoal(null);
                 state = State.IDLE;
             }
 
             if (object instanceof Sugar) {
                 hitsSugar((Sugar)object);
+            }
+
+            if (object instanceof Apple) {
+                hitsApple((Apple)object);
             }
 
             if (object instanceof AntGame.Hill) {
@@ -101,12 +110,24 @@ public abstract class Ant extends Actor {
         }
     }
 
+    private void setGoal(GameObject goal) {
+        this.goal = goal;
+    }
+
+    private void setCarries(GameObject carries) {
+        if (this.carries instanceof Apple) {
+            ((Apple)this.carries).removeAnt(this);
+        }
+        this.carries = carries;
+    }
+
     protected void walkAround() {
+        setGoal(null);
         state = State.WALKING;
     }
 
     protected void walkTo(GameObject object) {
-        goal = object;
+        setGoal(object);
         final float degrees = (float)Math.atan2(
             object.getCenterY() - getY(),
             object.getCenterX() - getX()
@@ -130,18 +151,41 @@ public abstract class Ant extends Actor {
         return carries != null;
     }
 
+    protected boolean isCarryingSugar() {
+        return carries instanceof Sugar;
+    }
+
+    protected boolean isCarryingApple() {
+        return carries instanceof Apple;
+    }
+
     protected void take(Sugar sugar) {
         if (!isCarrying()) {
             if (new Vector2(getX(), getY()).dst(sugar.getCenterX(), sugar.getCenterY()) <= HIT_RADIUS) {
-                carries = sugar;
+                setCarries(sugar);
                 sugar.takeOne();
-                goal = null;
+                setGoal(null);
                 state = State.IDLE;
             } else {
-                print("Sugar too far away");
+                print("Sugar too far away.");
             }
         } else {
-            print("Already carrying something");
+            print("Cannot take sugar. Already carrying something else.");
+        }
+    }
+
+    protected void take(Apple apple) {
+        if (!isCarrying()) {
+            if (new Vector2(getX(), getY()).dst(apple.getCenterX(), apple.getCenterY()) <= HIT_RADIUS) {
+                setCarries(apple);
+                apple.addAnt(this);
+                setGoal(null);
+                state = State.CARRYING_APPLE;
+            } else {
+                print("Apple too far away.");
+            }
+        } else {
+            print("Cannot take apple. Already carrying something else.");
         }
     }
 
@@ -151,20 +195,25 @@ public abstract class Ant extends Actor {
 
     protected void walk(float distance) {
         final Vector2 point = new Vector2(getX(), getY()).add(new Vector2((float)Math.cos(getRotation() * MathUtils.degreesToRadians), (float)Math.sin(getRotation() * MathUtils.degreesToRadians)).scl(distance));
-        goal = game.createMarker(point.x, point.y);
+        setGoal(game.createMarker(point.x, point.y));
         state = State.WALKING;
     }
 
     protected void unload() {
-        final AntGame.Hill hill = game.getHill();
-        if (isCarrying()) {
+        if (isCarryingSugar()) {
+            final AntGame.Hill hill = game.getHill();
             if (new Vector2(getX(), getY()).dst(hill.getCenterX(), hill.getCenterY()) <= HIT_RADIUS) {
                 game.unload(carries);
-                carries = null;
+                setCarries(null);
                 state = State.IDLE;
             } else {
                 print("Hill too far away");
             }
+        }
+
+        if (isCarryingApple()) {
+            setCarries(null);
+            state = State.IDLE;
         }
     }
 
@@ -178,8 +227,10 @@ public abstract class Ant extends Actor {
 
     abstract void hasNothingToDo();
     abstract void seesSugar(Sugar sugar);
+    abstract void seesApple(Apple apple);
     abstract void seesHill();
     abstract void hitsSugar(Sugar sugar);
+    abstract void hitsApple(Apple apple);
     abstract void hitsHill();
     abstract void smellsNewScent(Scent scent);
 }

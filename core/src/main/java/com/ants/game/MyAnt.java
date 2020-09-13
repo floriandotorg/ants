@@ -22,6 +22,9 @@ public class MyAnt extends Ant {
         Takes sugar from ground if some is there
         void take(Sugar sugar)
 
+        Takes apple from ground if some is there
+        void take(Apple apple)
+
         Unloads whatever the ant is carrying if its close to the hill
         void unload()
 
@@ -38,6 +41,12 @@ public class MyAnt extends Ant {
 
         Return true is ant is carrying something
         boolean isCarrying()
+
+        Return true is ant is carrying sugar
+        boolean isCarryingSugar()
+
+        Return true is ant is carrying an apple
+        boolean isCarryingApple()
      */
 
     public MyAnt(AntGame game) {
@@ -46,16 +55,33 @@ public class MyAnt extends Ant {
 
     @Override
     void hasNothingToDo() {
+        walkAround();
     }
 
     @Override
     void seesSugar(Sugar sugar) {
+        //sprayScent(1, 100);
 
+
+    }
+
+    @Override
+    void seesApple(Apple apple) {
+        if (!isCarrying() && apple.needsMoreAnts()) {
+            walkTo(apple);
+        }
     }
 
     @Override
     void hitsSugar(Sugar sugar) {
 
+    }
+
+    @Override
+    void hitsApple(Apple apple) {
+        if (!isCarrying() && apple.needsMoreAnts()) {
+            take(apple);
+        }
     }
 
     @Override
@@ -70,6 +96,8 @@ public class MyAnt extends Ant {
 
     @Override
     void smellsNewScent(Scent scent) {
-
+        if (!hasGoal() && !isCarrying()) {
+            walkTo(scent);
+        }
     }
 }

@@ -29,17 +29,18 @@ class Sugar extends Image implements GameObject {
         return amount < 1;
     }
 
-    @Override
     public float getCenterX() {
         return getX() + getWidth()/2;
     }
 
-    @Override
     public float getCenterY() {
         return getY() + getHeight()/2;
     }
 
-    @Override
+    public Vector2 getCenter() {
+        return new Vector2(getCenterX(), getCenterY());
+    }
+
     public String toString() {
         return String.format("Sugar at %f, %f", getCenterX(), getCenterY());
     }

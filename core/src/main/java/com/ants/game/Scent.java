@@ -1,5 +1,7 @@
 package com.ants.game;
 
+import com.badlogic.gdx.math.Vector2;
+
 import java.util.ArrayList;
 
 public class Scent implements GameObject {
@@ -33,6 +35,10 @@ public class Scent implements GameObject {
 
     public float getCenterY() {
         return y;
+    }
+
+    public Vector2 getCenter() {
+        return new Vector2(getCenterX(), getCenterY());
     }
 
     public void tick(float delta) {
